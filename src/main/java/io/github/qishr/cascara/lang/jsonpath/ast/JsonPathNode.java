@@ -15,7 +15,7 @@ public abstract class JsonPathNode implements AstNode {
     protected int startColumn;
     protected int endLine;
     protected int endColumn;
-    protected URI uri;
+    protected URI originUri;
     protected URI schemaUri;
 
     protected final List<JsonPathNode> children = new ArrayList<>();
@@ -34,7 +34,7 @@ public abstract class JsonPathNode implements AstNode {
     public int getEndColumn() { return endColumn; }
 
     @Override
-    public URI getUri() { return uri; }
+    public URI getOriginUri() { return originUri; }
 
     @Override
     public List<JsonPathNode> getChildren() {
@@ -55,7 +55,7 @@ public abstract class JsonPathNode implements AstNode {
         this.startColumn = startColumn;
         this.endLine = endLine;
         this.endColumn = endColumn;
-        this.uri = uri;
+        this.originUri = uri;
     }
 
     @Override
@@ -63,9 +63,8 @@ public abstract class JsonPathNode implements AstNode {
         return this.toString();
     }
 
-    // @Override
-    public Optional<URI> getSchemaUri() {
-        return schemaUri == null ? Optional.empty() : Optional.of(schemaUri);
+    public URI getSchemaUri() {
+        return schemaUri;
     }
 
     public void setSchemaUri(URI schemaUri) {

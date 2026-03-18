@@ -6,6 +6,7 @@ import io.github.qishr.cascara.lang.jsonpath.ast.JsonPathNode;
 public class JsonPathDocument extends JsonPathNode implements StructuredDocument {
     private JsonPathNode root;
 
+
     public JsonPathDocument(JsonPathNode root) {
         this.root = root;
         this.children.add(root);

@@ -48,7 +48,7 @@ public enum JsonPathComparisonOperator implements AstNode {
     }
 
     @Override
-    public URI getUri() {
+    public URI getOriginUri() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUri'");
     }
