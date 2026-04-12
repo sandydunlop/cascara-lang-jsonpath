@@ -3,6 +3,7 @@ package io.github.qishr.cascara.lang.jsonpath.processor;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.NullReporter;
 import io.github.qishr.cascara.common.lang.LanguageOptions;
+import io.github.qishr.cascara.common.lang.exception.ParserException;
 import io.github.qishr.cascara.common.lang.processor.Parser;
 import io.github.qishr.cascara.lang.jsonpath.JsonPathOptions;
 import io.github.qishr.cascara.lang.jsonpath.JsonPathDocument;
@@ -14,7 +15,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JsonPathParser implements Parser<JsonPathDocument> {
+public class JsonPathParser implements Parser<JsonPathDocument, JsonPathToken> {
 
     private Reporter reporter = new NullReporter();
     private JsonPathOptions options = new JsonPathOptions();
@@ -51,7 +52,17 @@ public class JsonPathParser implements Parser<JsonPathDocument> {
                 .setReporter(reporter)
                 .setOptions(options);
 
-        this.tokens = tokenizer.tokenize(text, uri);
+        return parse(tokenizer.tokenize(text, uri), uri);
+    }
+
+    @Override
+    public JsonPathDocument parse(List<JsonPathToken> tokens) throws ParserException {
+        return parse(tokens, null);
+    }
+
+    @Override
+    public JsonPathDocument parse(List<JsonPathToken> tokens, URI uri) throws ParserException {
+        this.tokens = tokens;
         this.index = 0;
         this.depth = 0;
 
