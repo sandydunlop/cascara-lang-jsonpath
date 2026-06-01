@@ -1,9 +1,9 @@
 package io.github.qishr.cascara.lang.jsonpath.processor;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.NullReporter;
+import io.github.qishr.cascara.common.util.ContentType;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.lang.LanguageOptions;
-import io.github.qishr.cascara.common.lang.exception.ParserException;
 import io.github.qishr.cascara.common.lang.processor.Parser;
 import io.github.qishr.cascara.lang.jsonpath.JsonPathOptions;
 import io.github.qishr.cascara.lang.jsonpath.JsonPathDocument;
@@ -16,14 +16,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JsonPathParser implements Parser<JsonPathDocument, JsonPathToken> {
+    static final ContentType contentType = new ContentType("JSONPath")
+            .withType("cascara/jsonpath")
+;
 
-    private Reporter reporter = new NullReporter();
+    private Reporter reporter = new NoOpReporter();
     private JsonPathOptions options = new JsonPathOptions();
 
     private List<JsonPathToken> tokens;
     private int index;
     private URI uri;
     private int depth;
+
+    @Override
+    public ContentType getContentType() {
+        return contentType;
+    }
 
     @Override
     public JsonPathParser setReporter(Reporter reporter) {
@@ -56,12 +64,12 @@ public class JsonPathParser implements Parser<JsonPathDocument, JsonPathToken> {
     }
 
     @Override
-    public JsonPathDocument parse(List<JsonPathToken> tokens) throws ParserException {
+    public JsonPathDocument parse(List<JsonPathToken> tokens) {
         return parse(tokens, null);
     }
 
     @Override
-    public JsonPathDocument parse(List<JsonPathToken> tokens, URI uri) throws ParserException {
+    public JsonPathDocument parse(List<JsonPathToken> tokens, URI uri) {
         this.tokens = tokens;
         this.index = 0;
         this.depth = 0;
@@ -496,7 +504,7 @@ public class JsonPathParser implements Parser<JsonPathDocument, JsonPathToken> {
     }
 
     private void error(String msg) {
-        reporter.error(msg);
+        reporter.error(null, msg);
     }
 
     //

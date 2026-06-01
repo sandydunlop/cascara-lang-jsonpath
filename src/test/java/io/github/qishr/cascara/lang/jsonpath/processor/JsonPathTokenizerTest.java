@@ -8,7 +8,7 @@ import io.github.qishr.cascara.lang.jsonpath.JsonPathOptions;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.SimpleReporter;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
-import io.github.qishr.cascara.common.diagnostic.NullReporter;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

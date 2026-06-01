@@ -1,13 +1,7 @@
 pluginManagement {
     repositories {
-
         mavenLocal()
         gradlePluginPortal()
-
-        maven {
-            url = uri('https://repo.foojay.io/maven/')
-        }
-
         mavenCentral()
     }
 }

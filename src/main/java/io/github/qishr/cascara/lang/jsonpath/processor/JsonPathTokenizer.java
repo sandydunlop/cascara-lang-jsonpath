@@ -5,16 +5,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
-import io.github.qishr.cascara.common.diagnostic.NullReporter;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.lang.LanguageOptions;
 import io.github.qishr.cascara.common.lang.processor.Tokenizer;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.lang.jsonpath.JsonPathOptions;
 import io.github.qishr.cascara.lang.jsonpath.token.JsonPathToken;
 import io.github.qishr.cascara.lang.jsonpath.token.JsonPathTokenType;
 
 public class JsonPathTokenizer implements Tokenizer<JsonPathToken> {
 
-    private Reporter reporter = new NullReporter();
+    private Reporter reporter = new NoOpReporter();
     private JsonPathOptions options = new JsonPathOptions();
     private int offset = 0;
     private int line = 1;
@@ -127,7 +128,7 @@ public class JsonPathTokenizer implements Tokenizer<JsonPathToken> {
                 }
 
                 if (!closed) {
-                    reporter.errorAt(line, startCol, uri, "Unterminated string literal");
+                    reporter.errorAt(uri, line, startCol, null, "Unterminated string literal");
                 }
 
                 addToken(new JsonPathToken(
@@ -196,7 +197,7 @@ public class JsonPathTokenizer implements Tokenizer<JsonPathToken> {
             }
 
             // Unknown character
-            reporter.errorAt(line, col, uri, "Unexpected character: " + currentChar);
+            reporter.errorAt(uri, line, col, null, "Unexpected character: " + currentChar);
             offset++;
             col++;
         }
@@ -245,5 +246,11 @@ public class JsonPathTokenizer implements Tokenizer<JsonPathToken> {
             default:
                 return Character.toString(c);
         }
+    }
+
+    @Override
+    public ContentType getContentType() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getContentType'");
     }
 }

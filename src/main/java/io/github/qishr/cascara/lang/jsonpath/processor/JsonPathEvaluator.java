@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.SimpleReporter;
+import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
@@ -17,22 +20,57 @@ import io.github.qishr.cascara.lang.jsonpath.ast.*;
 
 public class JsonPathEvaluator {
 
+    private Reporter reporter = new SimpleReporter()
+        .setLevel(Level.TRACE)
+        .setDisableFlush(false);
+
     private final Map<String, JsonPathFunction> functions = new HashMap<>();
 
     public JsonPathEvaluator() {
         registerBuiltInFunctions();
     }
 
+    public JsonPathEvaluator setReporter(Reporter reporter) {
+        this.reporter = reporter;
+        return this;
+    }
+
     public Object evaluate(JsonPathNode path, AstNode json) {
-        // printStructure(path, "");
+        reporter.trace("=== Begin JsonPathEvaluator ===");
+        printStructure(path, "");
         EvaluationContext ctx = new EvaluationContext(json, json, null, 0, 0);
-        return evaluatePath(path, ctx);
+        Object object = evaluatePath(path, ctx);
+        reporter.trace("=== End JsonPathEvaluator ===");
+        return object;
     }
 
     private Object evaluatePath(JsonPathNode node, EvaluationContext ctx) {
-        // 1. Handle Collection Mapping for Siblings
+        // DIAGNOSTIC: Trace the evaluation of the chain
+        if (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode) {
+            reporter.trace("%sPathNode: %s | Input: %s",
+                "  ".repeat(ctx.depth), node.getClass().getSimpleName(),
+                ctx.current == null ? "null" : ctx.current.getClass().getSimpleName());
+        }
+
+
+        // // 1. Handle Collection Mapping for Siblings
+        // if (ctx.current instanceof Collection<?> col &&
+        //     (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode || node instanceof JsonPathSliceNode)) {
+
+        //     List<Object> results = new ArrayList<>();
+        //     for (Object item : col) {
+        //         Object res = evaluatePath(node, ctx.withCurrent(item));
+        //         if (res != null) {
+        //             if (res instanceof Collection<?> sub) results.addAll(sub);
+        //             else results.add(res);
+        //         }
+        //     }
+        //     return results;
+        // }
+
+        // Handle Collection Mapping for Siblings/Recursive results
         if (ctx.current instanceof Collection<?> col &&
-            (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode || node instanceof JsonPathSliceNode)) {
+            !(node instanceof JsonPathIndexNode || node instanceof JsonPathSliceNode)) {
 
             List<Object> results = new ArrayList<>();
             for (Object item : col) {
@@ -44,6 +82,7 @@ public class JsonPathEvaluator {
             }
             return results;
         }
+
 
         Object result = null;
         if (node instanceof JsonPathRootNode root) {
@@ -81,18 +120,29 @@ public class JsonPathEvaluator {
                 result = list.get(0);
             }
             if (result instanceof ScalarAstNode s) {
-                return s.getPrimitiveValue();
+                result = s.getPrimitiveValue();
             }
         }
 
+
         // // DIAGNOSTIC: Trace the evaluation of the chain
         // if (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode) {
-        //     System.out.println(String.format("[DEBUG] PathNode: %s | Input: %s | Result: %s",
-        //         node.getClass().getSimpleName(),
-        //         ctx.current == null ? "null" : ctx.current.getClass().getSimpleName(),
-        //         (result == null ? "NULL" : result.getClass().getSimpleName())));
+        //     reporter.trace("%sPathNode: %s | Result: %s",
+        //         "  ".repeat(ctx.depth), node.getClass().getSimpleName(),
+        //         (result == null ? "NULL" : result.getClass().getSimpleName()));
         // }
 
+        // DIAGNOSTIC: Replace your current tracing block with this
+        if (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode) {
+            String detail = "null";
+            if (ctx.current instanceof SequenceAstNode seq) detail = "Sequence(size=" + seq.size() + ")";
+            else if (ctx.current instanceof MapAstNode<?,?> map) detail = "Map(keys=" + map.getEntries().size() + ")";
+            else if (ctx.current instanceof Collection<?> col) detail = "Collection(size=" + col.size() + ")";
+            else if (ctx.current != null) detail = ctx.current.getClass().getSimpleName();
+
+            reporter.trace("%sPathNode: %s | Input: %s",
+                "  ".repeat(ctx.depth), node.getClass().getSimpleName(), detail);
+        }
 
         return result;
     }
@@ -120,14 +170,29 @@ public class JsonPathEvaluator {
         return null;
     }
 
+    // private Object evaluateIndex(JsonPathIndexNode node, EvaluationContext ctx) {
+    //     Object cur = ctx.current;
+    //     if (cur instanceof SequenceAstNode seq) {
+    //         int idx = node.getIndex();
+    //         if (idx >= 0 && idx < seq.size()) {
+    //             return seq.get(idx);
+    //         }
+    //     }
+    //     return null;
+    // }
     private Object evaluateIndex(JsonPathIndexNode node, EvaluationContext ctx) {
         Object cur = ctx.current;
-        if (cur instanceof SequenceAstNode seq) {
-            int idx = node.getIndex();
-            if (idx >= 0 && idx < seq.size()) {
-                return seq.get(idx);
-            }
+        int idx = node.getIndex();
+
+        // Handle standard AST Sequences
+        if (cur instanceof SequenceAstNode<?> seq) {
+            if (idx >= 0 && idx < seq.size()) return seq.get(idx);
         }
+        // Handle Java Lists (from Recursive/Union nodes)
+        else if (cur instanceof List<?> list) {
+            if (idx >= 0 && idx < list.size()) return list.get(idx);
+        }
+
         return null;
     }
 
@@ -338,10 +403,10 @@ public class JsonPathEvaluator {
         return null;
     }
 
-    // private void printStructure(JsonPathNode node, String indent) {
-    //     System.out.println(indent + node.getClass().getSimpleName());
-    //     for (JsonPathNode child : node.getChildren()) {
-    //         printStructure(child, indent + "  ");
-    //     }
-    // }
+    private void printStructure(JsonPathNode node, String indent) {
+        reporter.trace(indent + node.getClass().getSimpleName());
+        for (JsonPathNode child : node.getChildren()) {
+            printStructure(child, indent + "  ");
+        }
+    }
 }
