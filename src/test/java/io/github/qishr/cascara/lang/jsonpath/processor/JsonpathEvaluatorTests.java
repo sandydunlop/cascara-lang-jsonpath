@@ -437,7 +437,7 @@ class JsonpathEvaluatorTests {
         SimpleMapNode root = new SimpleMapNode();
         root.put("sidebar", sidebar);
 
-        // 2. Manually construct the AST siblings to match your trace:
+        // 2. Manually construct the AST siblings:
         // Root -> Field(sidebar) -> Field(items) -> Index(0)
         // We make them siblings under Root to match your "I already know they're siblings" point.
         JsonPathRootNode path = new JsonPathRootNode();

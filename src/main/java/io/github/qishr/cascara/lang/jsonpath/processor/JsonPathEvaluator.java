@@ -120,19 +120,10 @@ public class JsonPathEvaluator {
                 result = list.get(0);
             }
             if (result instanceof ScalarAstNode s) {
-                result = s.getPrimitiveValue();
+                result = s.getPrimitive();
             }
         }
 
-
-        // // DIAGNOSTIC: Trace the evaluation of the chain
-        // if (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode) {
-        //     reporter.trace("%sPathNode: %s | Result: %s",
-        //         "  ".repeat(ctx.depth), node.getClass().getSimpleName(),
-        //         (result == null ? "NULL" : result.getClass().getSimpleName()));
-        // }
-
-        // DIAGNOSTIC: Replace your current tracing block with this
         if (node instanceof JsonPathFieldNode || node instanceof JsonPathIndexNode) {
             String detail = "null";
             if (ctx.current instanceof SequenceAstNode seq) detail = "Sequence(size=" + seq.size() + ")";
@@ -279,7 +270,7 @@ public class JsonPathEvaluator {
                     }
 
                     if (finalValue != null) {
-                        out.add(finalValue instanceof ScalarAstNode s ? s.getPrimitiveValue() : finalValue);
+                        out.add(finalValue instanceof ScalarAstNode s ? s.getPrimitive() : finalValue);
                     }
                 }
             }
@@ -336,8 +327,8 @@ public class JsonPathEvaluator {
         Object right = evaluateExpression(cmp.getRight(), ctx);
 
         // Required unwrap for comparison logic to function against AST types
-        if (left instanceof ScalarAstNode s) left = s.getPrimitiveValue();
-        if (right instanceof ScalarAstNode s) right = s.getPrimitiveValue();
+        if (left instanceof ScalarAstNode s) left = s.getPrimitive();
+        if (right instanceof ScalarAstNode s) right = s.getPrimitive();
 
         return switch (cmp.getOperator()) {
             case EQ -> Objects.equals(left, right);
@@ -374,7 +365,7 @@ public class JsonPathEvaluator {
 
     private boolean truthy(Object v) {
         if (v == null) return false;
-        if (v instanceof ScalarAstNode s) v = s.getPrimitiveValue();
+        if (v instanceof ScalarAstNode s) v = s.getPrimitive();
         if (v instanceof Boolean b) return b;
         if (v instanceof Number n) return n.doubleValue() != 0;
         if (v instanceof String s) return !s.isEmpty();
